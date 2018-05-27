@@ -142,8 +142,3 @@ equiv.trans_apply _ _ _
 @[simp] theorem aut_one_val (x) : (1 : homeo α α) x = x := rfl
 
 theorem aut_inv (f : homeo α α) : f⁻¹ = f.symm := rfl
-
--- The following are due to jmp (that's me!)
-def is_inv (f : α → β) (g : β → α) : Prop := sorry
-
-def is_homeo (f : α → β) := continuous f ∧ ∃ g, is_inv f g ∧ continuous g
