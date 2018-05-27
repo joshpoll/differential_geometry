@@ -16,15 +16,18 @@ There is a lot of existing topology formalism, however there are several import 
 
 ## Normed Vector Spaces
 - operator norm
+
 Patrick has done a great job with this. I am slightly tweaking it and still unsure about whether the relationship between norms and metrics is the correct one.
 
 ## Differentiability
 - derivatives
 - diffeomorphisms
 - differential operators (maybe?)
+
 Coquelicot is probably the most sophisticated existing library for real analysis. I intend to build higher rather than flesh out analysis results for now.
 
 ## Manifolds
 - topological manifolds
 - smooth manifolds
+
 Doing this properly will require piecing through some of the ambiguity around what goes into a chart. Is it really a pair? If it isn't, can it be treated as one?
