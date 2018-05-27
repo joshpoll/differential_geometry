@@ -1,0 +1,6 @@
+-- A smooth manifold is a dependent pair of a topological manifold M and a smooth structure A on M
+-- A smooth structure is a maximal smooth atlas
+-- A maximal smooth atlas is a smooth atlas not contained in any other smooth atlas
+-- An atlas is a collection of charts whose domains cover M (this should go in topological_manifolds)
+-- (topological_manifolds) Prove the charts of an atlas are pairwise (continuously) compatible
+-- A smooth atlas is an atlas whose charts are pairwise smoothly compatible. This avoids the difficulty of directly defining differentiable structure on a manifold. Directly defining topological structure is much easier so we don't do the same thing for topological manifolds (but as far as I know, we could. I should ask someone about this)
