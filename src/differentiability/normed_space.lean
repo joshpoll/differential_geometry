@@ -176,6 +176,8 @@ end
 -- for now, k is implicit
 def clm {k : Type*} (E : Type*) (F : Type*) [normed_field k] [normed_space k E] [normed_space k F] := { L : E → F // is_continuous_linear_map L }
 
+-- TODO: I think clm should be a structure/class (what's the difference?) that extends linear_map (which isn't a structure/class...) and continuous (which also isn't a structure/class). perhaps it should just be coercible instead
+
 namespace clm
 section
 
@@ -273,7 +275,8 @@ instance : module k (clm E F) :=
 
 -- TODO: this might be better in a different section, but we'll keep it here for now
 
--- TODO: leverage boundedness proof above to show that Inf has a valu
+-- TODO: leverage boundedness proof above to show that Inf has a value
+-- TODO: big ops should make this easier to define (I think)
 def op_norm : clm E F → ℝ := λ L, Inf { M : ℝ | M ≥ 0 ∧ ∀ v : E, ∥L⬝v∥ ≤ M * ∥v∥ }
 -- TODO: implement has_norm
 -- instance : has_norm (clm E F) := ⟨clm.op_norm⟩
