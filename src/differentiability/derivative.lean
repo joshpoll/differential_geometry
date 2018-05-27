@@ -7,10 +7,6 @@ open lattice clm
 
 noncomputable theory
 
-/- def is_ptws_deriv (f : ℝ → ℝ) (a : ℝ) (f' : ℝ) :=
-  ∃ p : ℝ → ℝ, (∀ x, f x = f a + (p x) * (x - a)) ∧ is_ptws_cont p a ∧ f' = p a
- -/
-
 variables {k : Type*} [normed_field k] 
 variables {E : Type*}  [normed_space k E] 
 variables {F : Type*} [normed_space k F]

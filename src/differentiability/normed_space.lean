@@ -30,6 +30,7 @@ variables {G : Type*} [normed_space k G]
 include k
 def is_continuous_linear_map (L : E → F) := (is_linear_map L) ∧ (continuous L)
 
+-- ways to combine is_continuous_linear_map proofs
 namespace is_continuous_linear_map
 
 lemma zero : is_continuous_linear_map (λ (x:E), (0:F)) :=
@@ -43,7 +44,6 @@ lemma id : is_continuous_linear_map (λ (x:E), x) :=
 -- this seems harder than its bounded counterpart (which is admittedly nontrivial)
 lemma smul {L : E → F} (c : k) (H : is_continuous_linear_map L) : is_continuous_linear_map (λ e, c•L e) := sorry
 
--- easier
 lemma neg {L : E → F} (H : is_continuous_linear_map L) :
 is_continuous_linear_map (λ e, -L e) :=
 begin
@@ -53,7 +53,6 @@ begin
   { exact continuous_neg cont }
 end
 
--- easier
 lemma add {L : E → F} {M : E → F} (HL : is_continuous_linear_map L) (HM : is_continuous_linear_map M) : 
 is_continuous_linear_map (λ e, L e + M e) :=
 begin
@@ -67,7 +66,6 @@ end
 lemma sub {L : E → F} {M : E → F} (HL : is_continuous_linear_map L) (HM : is_continuous_linear_map M) : 
 is_continuous_linear_map (λ e, L e - M e) := add HL (neg HM)
 
--- easier
 lemma comp {L : E → F} {M : F → G} (HL : is_continuous_linear_map L) (HM  : is_continuous_linear_map M) : is_continuous_linear_map (M ∘ L) :=
 begin
 rcases HL with ⟨lin_L, cont_L⟩,
@@ -79,73 +77,11 @@ end
 
 end is_continuous_linear_map
 
+-- some holdover code about bounded linear maps. it will eventually be useful, but not currently used, because is_continuous_linear_map is better
+
 def is_bounded_linear_map (L : E → F) := (is_linear_map L) ∧  ∃ M, M > 0 ∧ ∀ x : E, ∥ L x ∥ ≤ M *∥ x ∥ 
 
 namespace is_bounded_linear_map
-
-lemma zero : is_bounded_linear_map (λ (x:E), (0:F)) :=
-⟨is_linear_map.map_zero, exists.intro (1:ℝ) $ by norm_num⟩
-
-lemma id : is_bounded_linear_map (λ (x:E), x) :=
-⟨is_linear_map.id, exists.intro (1:ℝ) $ by { norm_num, finish }⟩
-
-lemma smul {L : E → F} (H : is_bounded_linear_map L) (c : k) :
-is_bounded_linear_map (λ e, c•L e) :=
-begin
-  by_cases h : c = 0,
-  { simp[h], exact zero },
-
-  rcases H with ⟨lin , M, Mpos, ineq⟩,
-  split,
-  { exact is_linear_map.map_smul_right lin },
-  { existsi ∥c∥*M,
-    split, 
-    { exact mul_pos (norm_pos_iff.2 h) Mpos },
-    intro x,
-    simp,
-    exact  calc ∥c • L x∥ = ∥c∥*∥L x∥ : norm_smul c (L x)
-    ... ≤ ∥c∥ * M * ∥x∥ : by {simp[mul_assoc, mul_le_mul_of_nonneg_left (ineq x) (show ∥c∥ ≥ 0, from norm_nonneg)]} }
-end
-
-lemma neg {L : E → F} (H : is_bounded_linear_map L) :
-is_bounded_linear_map (λ e, -L e) :=
-begin
-  rw [show (λ e, -L e) = (λ e, (-1)•L e), by { funext, simp }],
-  exact smul H (-1)
-end
-
-lemma add {L : E → F} {P : E → F} (HL : is_bounded_linear_map L) (HP :is_bounded_linear_map P) : 
-is_bounded_linear_map (λ e, L e + P e) :=
-begin
-  rcases HL with ⟨lin_L , M, Mpos, ineq_L⟩,
-  rcases HP with ⟨lin_P , M', M'pos, ineq_P⟩,
-  split, exact (is_linear_map.map_add lin_L lin_P),
-  existsi (M+M'),
-  split, exact add_pos Mpos M'pos,
-  intro x, simp,
-  exact calc
-  ∥L x + P x∥ ≤ ∥L x∥ + ∥P x∥ : norm_triangle _ _
-  ... ≤ M * ∥x∥ + M' * ∥x∥ : add_le_add (ineq_L x) (ineq_P x)
- ... ≤ (M + M') * ∥x∥ : by rw  ←add_mul
-end
-
-lemma sub {L : E → F} {P : E → F} (HL : is_bounded_linear_map L) (HP :is_bounded_linear_map P) : 
-is_bounded_linear_map (λ e, L e - P e) := add HL (neg HP)
-
-lemma comp {L : E → F} {P : F → G} (HL : is_bounded_linear_map L) (HP :is_bounded_linear_map P) : is_bounded_linear_map (P ∘ L) :=
-begin
-rcases HL with ⟨lin_L , M, Mpos, ineq_L⟩,
-rcases HP with ⟨lin_P , M', M'pos, ineq_P⟩,
-split,
-{ exact is_linear_map.comp lin_P lin_L },
-{ existsi M'*M,
-  split,
-  { exact mul_pos M'pos Mpos },
-  { intro x,
-    exact calc
-      ∥P (L x)∥ ≤ M' * ∥L x∥ : ineq_P (L x)
-            ... ≤  M'*M*∥x∥ : by simp[mul_assoc, mul_le_mul_of_nonneg_left (ineq_L x) (le_of_lt M'pos)] } }
-end
 
 lemma continuous {L : E → F} (H : is_bounded_linear_map L) : continuous L :=
 begin
@@ -232,6 +168,8 @@ begin
     ... = (δ/2)⁻¹*∥x∥ : by simp[mul_comm] }
 end
 
+/- Continuous Linear Maps -/
+
 -- the following approach is based off that of poly in number_theory/dioph.lean, which also packages together functions with their proofs
 
 -- for now, k is implicit
@@ -246,6 +184,7 @@ instance : has_coe_to_fun (clm E F) := ⟨_, λ L, L.1⟩
 
 -- treat clm application as "multiplication" and give it the right space
 -- Need it to be tupled so continuity makes sense naturally (could also use the approach in topological_structures.lean)
+-- TODO: this feels really bad. The notation is always exposed. Need to find a better way
 def clm_app_pair (p : (clm E F) × E) := p.1 p.2
 local notation L `⬝`:70 v := clm_app_pair ⟨L, v⟩
 @[simp] theorem clm_app_pair_eval (L : clm E F) (v) : (L⬝v) = L v := rfl
@@ -261,15 +200,16 @@ subtype.eq (funext e)
 -- construct isc given function that is extensionally equal
 def subst (L : clm E F) (M : E → F) (e : ∀ v, L⬝v = M v) : clm E F :=
 -- TODO: I don't know how the proof part works
--- TODO: once namespace/section is added, can replace isc L with L.isc (?)
 ⟨M, by rw ← (funext e : coe_fn L = M); exact L.isc⟩
--- TODO: this rewrite rule doesn't typecheck!!
+-- TODO: this rewrite rule doesn't typecheck!! (it was taken directly from poly unless I messed that up)
 -- @[simp] theorem subst_eval (L M e v) : subst L M e v = M v := rfl
 
 -- composition
 -- TODO: this should probably be an instance
 def clm_comp : clm E F → clm F G → clm E G := λ L M, ⟨λ v, M (L v), is_continuous_linear_map.comp L.2 M.2⟩
 local notation M `∘` L := clm_comp L M
+
+-- each of the identities and operations comes with an instance that tells Lean what it is and a simplification lemma that gives Lean a hint about how to "evaluate" it
 
 -- zero map
 def zero : clm E F := ⟨λ v, 0, is_continuous_linear_map.zero⟩
@@ -296,6 +236,8 @@ instance : has_sub (clm E F) := ⟨clm.sub⟩
 | ⟨L, pL⟩ ⟨M, pM⟩ v := rfl
 
 -- TODO: this proof doesn't work even though it does for poly
+-- possibly b/c neg and sub are defined differently?
+-- TODO: this feels weird being disconnected from neg
 @[simp] theorem neg_eval (L : clm E F) (v) : (-L)⬝v = -(L⬝v) := sorry
 -- show (0 - L) v = _, by simp
 
@@ -303,6 +245,8 @@ def smul : k → clm E F → clm E F := λ c L, ⟨λ v, c•(L⬝v), is_continu
 instance : has_scalar k (clm E F) := ⟨clm.smul⟩
 -- TODO: prove it
 @[simp] theorem smul_eval : Π c (L : clm E F) v, (c•L)⬝v = c•(L⬝v) := sorry
+
+/- Operator Norm -/
 
 -- TODO: this might be better in a different section, but we'll keep it here for now
 def op_norm : clm E F → ℝ := λ L, Inf { M : ℝ | M ≥ 0 ∧ ∀ v : E, ∥L⬝v∥ ≤ M * ∥v∥ }
@@ -359,6 +303,10 @@ calc
 op_norm (x - z) = op_norm ((x - y) + (y - z)) : by sorry
             ... ≤ op_norm (x - y) + op_norm (y - z) : by apply op_norm_triangle
 end
+
+/- Continuous Linear Maps form a normed vector space. -/
+
+-- This is crucial for differentiation.
 
 -- TODO: go straight to module?
 instance clm_add_comm_group : add_comm_group (clm E F) := by refine
