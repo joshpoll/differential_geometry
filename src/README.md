@@ -17,3 +17,7 @@ The approach for differentiability will be to use the Caratheodory derivative. S
 3. Caratheodory generalizes more readily to more abstract spaces
 4. Caratheodory has been used by other formalizations.
 5. The operator norm must be defined up front (this point is not very convincing. May also be needed for Frechet)
+
+What is the right way to formalize these structures?
+Structures? Classes? Combinations of predicates?
+Different parts of mathlib take different approaches. I'm not sure if this is by necessity or b/c no one's figured out which one is right yet.
