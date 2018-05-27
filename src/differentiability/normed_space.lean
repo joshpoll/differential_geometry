@@ -79,7 +79,10 @@ end is_continuous_linear_map
 
 -- some holdover code about bounded linear maps. it will eventually be useful, but not currently used, because is_continuous_linear_map is better
 
-def is_bounded_linear_map (L : E → F) := (is_linear_map L) ∧  ∃ M, M > 0 ∧ ∀ x : E, ∥ L x ∥ ≤ M *∥ x ∥ 
+-- bounded in the linear map sense
+def is_bounded (f : E → F) := ∃ M, M > 0 ∧ ∀ x : E, ∥f x∥ ≤ M * ∥x∥ 
+
+def is_bounded_linear_map (L : E → F) := (is_linear_map L) ∧ (is_bounded L)
 
 namespace is_bounded_linear_map
 
@@ -116,11 +119,9 @@ end is_bounded_linear_map
 
 -- Next lemma is stated for real normed space but it would work as soon as the base field is an extension of ℝ
 lemma bounded_continuous_linear_map {E : Type*}  [normed_space ℝ E] {F : Type*}  [normed_space ℝ F] {L : E → F} 
-(lin : is_linear_map L) (cont : continuous L ) : is_bounded_linear_map L :=
+(h : is_continuous_linear_map L) : is_bounded L :=
 begin
-  split,
-  exact lin,
-
+  rcases h with ⟨lin, cont⟩,
   replace cont := continuous_of_metric.1 cont 1 (by norm_num),
   swap, exact 0,
   rw[lin.zero] at cont,
@@ -271,6 +272,8 @@ instance : module k (clm E F) :=
 /- Operator Norm -/
 
 -- TODO: this might be better in a different section, but we'll keep it here for now
+
+-- TODO: leverage boundedness proof above to show that Inf has a valu
 def op_norm : clm E F → ℝ := λ L, Inf { M : ℝ | M ≥ 0 ∧ ∀ v : E, ∥L⬝v∥ ≤ M * ∥v∥ }
 -- TODO: implement has_norm
 -- instance : has_norm (clm E F) := ⟨clm.op_norm⟩
@@ -287,19 +290,36 @@ apply norm_zero_iff_zero.2,
 -- follows from L being a linear map
 end
 
+-- TODO: uglier than it should be
 theorem op_norm_nonneg {L : clm E F} : op_norm L ≥ 0 :=
 begin
-rw [op_norm_alt],
-unfold ge,
-apply real.le_Sup,
+unfold op_norm ge,
+apply real.lb_le_Inf,
+-- bounded
 {
-  -- can't run from boundedness unfortunately
-  admit
+  simp,
+  have : is_bounded L,
+  begin
+    -- exact bounded_continuous_linear_map L.isc,
+    admit
+  end,
+  unfold is_bounded at this,
+  cases this,
+  cases this_h,
+  existsi _,
+  split,
+  apply le_of_lt,
+  assumption,
+  assumption
 },
 {
-  exact op_norm_inhabited
+  intro,
+  simp,
+  intros,
+  assumption
 }
 end
+
 theorem op_norm_zero_iff_zero {L : clm E F} : op_norm L = 0 ↔ L = 0 :=
 begin
 split,
@@ -309,7 +329,9 @@ split,
 },
 admit
 end
+
 theorem op_norm_pos_homo : ∀ c (L : clm E F), op_norm (c•L) = ∥c∥ * op_norm L := sorry
+
 theorem op_norm_triangle : ∀ (L M : clm E F), op_norm (L + M) ≤ op_norm L + op_norm M :=
 begin
 intros,
