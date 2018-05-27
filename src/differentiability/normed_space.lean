@@ -246,6 +246,28 @@ instance : has_scalar k (clm E F) := ⟨clm.smul⟩
 -- TODO: prove it
 @[simp] theorem smul_eval : Π c (L : clm E F) v, (c•L)⬝v = c•(L⬝v) := sorry
 
+-- need these instances up here to prove stuff about the op norm
+-- TODO: go straight to module?
+instance : add_comm_group (clm E F) := by refine
+{
+  add := (+),
+  zero := 0,
+  neg := has_neg.neg,
+  ..
+};
+{ intros; exact ext (λ v, by simp) }
+
+-- TODO: use refine
+instance : module k (clm E F) :=
+{
+  smul := (•),
+ 
+  smul_add := by intros; exact ext (λ v, by simp [smul_add]),
+  add_smul := by intros; exact ext (λ v, by simp [add_smul]),
+  mul_smul := by intros; exact ext (λ v, by simp [mul_smul]),
+  one_smul := by intros; exact ext (λ v, by simp [one_smul]),
+}
+
 /- Operator Norm -/
 
 -- TODO: this might be better in a different section, but we'll keep it here for now
@@ -253,10 +275,40 @@ def op_norm : clm E F → ℝ := λ L, Inf { M : ℝ | M ≥ 0 ∧ ∀ v : E, �
 -- TODO: implement has_norm
 -- instance : has_norm (clm E F) := ⟨clm.op_norm⟩
 
-theorem op_norm_alt : ∀ L : clm E F, op_norm L = Sup { c : ℝ | ∃ v, ∥v∥ = 1 ∧ c = ∥L⬝v∥ } := sorry
+-- an alternate version that allows for easier proofs
+theorem op_norm_alt : ∀ L : clm E F, op_norm L = Sup { c : ℝ | ∃ v, ∥v∥ ≤ 1 ∧ ∥L⬝v∥ = c } := sorry
 
-theorem op_norm_nonneg {L : clm E F} : op_norm L ≥ 0 := sorry
-theorem op_norm_zero_iff_zero {L : clm E F} : op_norm L = 0 ↔ L = 0 := sorry
+theorem op_norm_inhabited {L : clm E F} : (0:ℝ) ∈ { c : ℝ | ∃ v, ∥v∥ ≤ 1 ∧ ∥L⬝v∥ = c } :=
+begin
+existsi (0:E),
+split,
+simp [zero_le_one],
+apply norm_zero_iff_zero.2,
+-- follows from L being a linear map
+end
+
+theorem op_norm_nonneg {L : clm E F} : op_norm L ≥ 0 :=
+begin
+rw [op_norm_alt],
+unfold ge,
+apply real.le_Sup,
+{
+  -- can't run from boundedness unfortunately
+  admit
+},
+{
+  exact op_norm_inhabited
+}
+end
+theorem op_norm_zero_iff_zero {L : clm E F} : op_norm L = 0 ↔ L = 0 :=
+begin
+split,
+{
+  rw [op_norm_alt],
+  admit
+},
+admit
+end
 theorem op_norm_pos_homo : ∀ c (L : clm E F), op_norm (c•L) = ∥c∥ * op_norm L := sorry
 theorem op_norm_triangle : ∀ (L M : clm E F), op_norm (L + M) ≤ op_norm L + op_norm M :=
 begin
@@ -274,16 +326,16 @@ begin
 intros,
 unfold op_dist,
 apply op_norm_zero_iff_zero.2,
--- should be an easy way to finish this
-admit,
+simp [add_left_neg]
 end
 
 theorem op_dist_eq_of_dist_eq_zero : ∀ (x y : clm E F), op_dist x y = 0 → x = y :=
 begin
 unfold op_dist,
 intros x y h,
--- should follow from op_norm_zero_iff_zero.2
-admit
+apply sub_eq_zero.1,
+apply op_norm_zero_iff_zero.1,
+assumption
 end
 -- TODO: clm is an instance of normed_space
 
@@ -291,8 +343,10 @@ theorem op_dist_comm : ∀ (x y : clm E F), op_dist x y = op_dist y x :=
 begin
 intros,
 simp [op_dist, op_norm],
+congr,
+funext,
+admit,
 -- the propositions are the same by the pos_homo for the underlying norm
-admit
 end
 
 theorem op_dist_triangle : ∀ (x y z : clm E F), op_dist x z ≤ op_dist x y + op_dist y z :=
@@ -300,7 +354,7 @@ begin
 intros,
 unfold op_dist,
 calc
-op_norm (x - z) = op_norm ((x - y) + (y - z)) : by sorry
+op_norm (x - z) = op_norm ((x - y) + (y - z)) : by simp
             ... ≤ op_norm (x - y) + op_norm (y - z) : by apply op_norm_triangle
 end
 
@@ -308,29 +362,8 @@ end
 
 -- This is crucial for differentiation.
 
--- TODO: go straight to module?
-instance clm_add_comm_group : add_comm_group (clm E F) := by refine
-{
-  add := (+),
-  zero := 0,
-  neg := has_neg.neg,
-  ..
-};
-{ intros; exact ext (λ v, by simp) }
-
--- TODO: use refine
-instance clm_module : module k (clm E F) :=
-{
-  smul := (•),
- 
-  smul_add := by intros; exact ext (λ v, by simp [smul_add]),
-  add_smul := by intros; exact ext (λ v, by simp [add_smul]),
-  mul_smul := by intros; exact ext (λ v, by simp [mul_smul]),
-  one_smul := by intros; exact ext (λ v, by simp [one_smul]),
-}
-
 -- TODO: solve
-instance clm_metric_space : metric_space (clm E F) :=
+instance : metric_space (clm E F) :=
 {
   dist := op_dist,
   
@@ -340,7 +373,7 @@ instance clm_metric_space : metric_space (clm E F) :=
   dist_triangle := op_dist_triangle
 }
 
-instance clm_normed_space : normed_space k (clm E F) :=
+instance : normed_space k (clm E F) :=
 {
   norm := op_norm,
 

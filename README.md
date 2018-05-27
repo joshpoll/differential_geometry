@@ -31,3 +31,10 @@ Coquelicot is probably the most sophisticated existing library for real analysis
 - smooth manifolds
 
 Doing this properly will require piecing through some of the ambiguity around what goes into a chart. Is it really a pair? If it isn't, can it be treated as one?
+
+## Linear Algebra (Sort Of)
+- continuous linear maps / bounded linear operators
+- multilinear maps
+- tensors
+
+https://ncatlab.org/nlab/show/continuous+multilinear+operator

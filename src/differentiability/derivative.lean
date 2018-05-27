@@ -77,7 +77,12 @@ def add {f g : E → F} {f' g' : E → clm E F} (hf : is_diff f f') (hg : is_dif
 -- derivative of smul'
 -- derivative of smul
 
+-- generalized product rule
+-- will be usurped by multilinear function
 -- derivative of bilinear function'
 -- derivative of bilinear function
+
+-- derivative of multilinear function'
+-- derivative of multilinear function
 end
 end derivative
