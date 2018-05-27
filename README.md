@@ -1,4 +1,4 @@
-This is an attempt to formalize some minimal aspects of differential geometry. In the process I hope to solidify and deepen my understanding of the subject and related topics I've learned this year.
+This is an attempt to formalize some minimal aspects of differential geometry. In the process I hope to solidify and deepen my understanding of the subject and related topics I've learned this year. It is also my 3rd iteration of formalizing differentiability.
 
 I am not aiming to write the best, most general version of definitions and theorems the first time, but rather write manageable chunks and generalize only when it makes things easier to do. I am also focusing on **ergonomics** (again, when it's easy to do so). This means adding coercions and instances liberally so things that should work just work.
 
