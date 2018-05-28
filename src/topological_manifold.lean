@@ -47,7 +47,7 @@ def neighborhood {α : Type u} [topological_space α] (a : α) := { s : set α /
 structure nbhd_chart {α : Type u} (a : α) (n : ℕ) [topological_space α] : Type u :=
 (coord_nbhd : neighborhood a)
 (coord_map : homeo coord_nbhd.1 ℝ^n)
--- TODO: coerce to chart
+-- TODO: coerce to chart?
 
 class topological_manifold (α : Type u) (n : ℕ) extends
   topological_space α,

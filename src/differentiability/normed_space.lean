@@ -6,6 +6,7 @@
 -- TODO: Lean still doesn't have pointwise continuity(!). We want that to make proofs more general. It's pretty simple to do.
 -- TODO: continuous at 0/arbitrary point => continuous everywhere
 -- see http://matrixeditions.com/FA.Chap3.1-4.pdf (among others)
+-- TODO: copy module.lean and linear_map_module.lean
 
 
 import algebra.field
@@ -21,31 +22,36 @@ local attribute [instance] classical.prop_decidable
 
 local notation f `→_{`:50 a `}`:0 b := filter.tendsto f (nhds a) (nhds b)
 
+universes u v w x
+variables {k : Type u}
+variables {E : Type v}
+variables {F : Type w}
+variables {G : Type x}
 
-variables {k : Type*} [normed_field k] 
-variables {E : Type*} [normed_space k E] 
-variables {F : Type*} [normed_space k F]
-variables {G : Type*} [normed_space k G]
+structure is_continuous_linear_map' {k : Type u} {E : Type v} {F : Type w} [normed_field k] [normed_space k E] [normed_space k F] (L : E → F) extends is_linear_map L : Prop :=
+(continuous : continuous L)
 
+-- def is_continuous_linear_map' (L : E → F) := (is_linear_map L) ∧ (continuous L)
+
+-- ways to combine is_continuous_linear_map' proofs
+namespace is_continuous_linear_map'
+variables [normed_field k] [normed_space k E] [normed_space k F] [normed_space k G]
+variable {L : E → F}
 include k
-def is_continuous_linear_map (L : E → F) := (is_linear_map L) ∧ (continuous L)
 
--- ways to combine is_continuous_linear_map proofs
-namespace is_continuous_linear_map
-
-lemma zero : is_continuous_linear_map (λ (x:E), (0:F)) :=
+lemma zero : is_continuous_linear_map' (λ (x:E), (0:F)) :=
 ⟨is_linear_map.map_zero, continuous_const⟩
 
-lemma id : is_continuous_linear_map (λ (x:E), x) :=
+lemma id : is_continuous_linear_map' (id : E → E) :=
 ⟨is_linear_map.id, continuous_id⟩
 
 -- Remark: smul and add should follow immediately from the fact that normed vectors spaces are topological vector spaces
 
 -- this seems harder than its bounded counterpart (which is admittedly nontrivial)
-lemma smul {L : E → F} (c : k) (H : is_continuous_linear_map L) : is_continuous_linear_map (λ e, c•L e) := sorry
+lemma smul (c : k) (H : is_continuous_linear_map' L) : is_continuous_linear_map' (λ e, c•L e) := sorry
 
-lemma neg {L : E → F} (H : is_continuous_linear_map L) :
-is_continuous_linear_map (λ e, -L e) :=
+lemma neg (H : is_continuous_linear_map' L) :
+is_continuous_linear_map' (λ e, -L e) :=
 begin
   rcases H with ⟨lin, cont⟩,
   split,
@@ -53,8 +59,8 @@ begin
   { exact continuous_neg cont }
 end
 
-lemma add {L : E → F} {M : E → F} (HL : is_continuous_linear_map L) (HM : is_continuous_linear_map M) : 
-is_continuous_linear_map (λ e, L e + M e) :=
+lemma add {L : E → F} {M : E → F} (HL : is_continuous_linear_map' L) (HM : is_continuous_linear_map' M) : 
+is_continuous_linear_map' (λ e, L e + M e) :=
 begin
   rcases HL with ⟨lin_L, cont_L⟩,
   rcases HM with ⟨lin_M , cont_M⟩,
@@ -63,10 +69,10 @@ begin
   { exact continuous_add cont_L cont_M }
 end
 
-lemma sub {L : E → F} {M : E → F} (HL : is_continuous_linear_map L) (HM : is_continuous_linear_map M) : 
-is_continuous_linear_map (λ e, L e - M e) := add HL (neg HM)
+lemma sub {L : E → F} {M : E → F} (HL : is_continuous_linear_map' L) (HM : is_continuous_linear_map' M) : 
+is_continuous_linear_map' (λ e, L e - M e) := add HL (neg HM)
 
-lemma comp {L : E → F} {M : F → G} (HL : is_continuous_linear_map L) (HM  : is_continuous_linear_map M) : is_continuous_linear_map (M ∘ L) :=
+lemma comp {L : E → F} {M : F → G} (HL : is_continuous_linear_map' L) (HM  : is_continuous_linear_map' M) : is_continuous_linear_map' (M ∘ L) :=
 begin
 rcases HL with ⟨lin_L, cont_L⟩,
 rcases HM with ⟨lin_M, cont_M⟩,
@@ -75,16 +81,16 @@ split,
 { exact continuous.comp cont_L cont_M }
 end
 
-end is_continuous_linear_map
+end is_continuous_linear_map'
 
--- some holdover code about bounded linear maps. it will eventually be useful, but not currently used, because is_continuous_linear_map is better
+-- some holdover code about bounded linear maps. it will eventually be useful, but not currently used, because is_continuous_linear_map' is better
 
--- bounded in the linear map sense
-def is_bounded (f : E → F) := ∃ M, M > 0 ∧ ∀ x : E, ∥f x∥ ≤ M * ∥x∥ 
-
-def is_bounded_linear_map (L : E → F) := (is_linear_map L) ∧ (is_bounded L)
+structure is_bounded_linear_map {k : Type u} {E : Type v} {F : Type w} [normed_field k] [normed_space k E] [normed_space k F] (L : E → F) extends is_linear_map L : Prop :=
+(bounded : ∃ M > 0, ∀ x : E, ∥L x∥ ≤ M * ∥x∥)
 
 namespace is_bounded_linear_map
+variables [normed_field k] [normed_space k E] [normed_space k F] [normed_space k G]
+include k
 
 lemma continuous {L : E → F} (H : is_bounded_linear_map L) : continuous L :=
 begin
@@ -111,17 +117,19 @@ begin
   { simpa using tendsto_mul lim1 lim2 }
 end
 
-
+-- not sure why this fails now
 lemma lim_zero_bounded_linear_map {L : E → F} (H : is_bounded_linear_map L) : (L →_{0} 0) :=
 by simpa [H.left.zero] using continuous_iff_tendsto.1 H.continuous 0
 
 end is_bounded_linear_map
 
 -- Next lemma is stated for real normed space but it would work as soon as the base field is an extension of ℝ
-lemma bounded_continuous_linear_map {E : Type*}  [normed_space ℝ E] {F : Type*}  [normed_space ℝ F] {L : E → F} 
-(h : is_continuous_linear_map L) : is_bounded L :=
+lemma bounded_continuous_linear_map {E : Type*} [normed_space ℝ E] {F : Type*}  [normed_space ℝ F] {L : E → F} 
+(h : is_continuous_linear_map' L) : is_bounded_linear_map L :=
 begin
   rcases h with ⟨lin, cont⟩,
+  split,
+  assumption,
   replace cont := continuous_of_metric.1 cont 1 (by norm_num),
   swap, exact 0,
   rw[lin.zero] at cont,
@@ -174,12 +182,13 @@ end
 -- the following approach is based off that of poly in number_theory/dioph.lean, which also packages together functions with their proofs
 
 -- for now, k is implicit
-def clm {k : Type*} (E : Type*) (F : Type*) [normed_field k] [normed_space k E] [normed_space k F] := { L : E → F // is_continuous_linear_map L }
+def clm {k : Type*} (E : Type*) (F : Type*) [normed_field k] [normed_space k E] [normed_space k F] := { L : E → F // is_continuous_linear_map' L }
 
 -- TODO: I think clm should be a structure/class (what's the difference?) that extends linear_map (which isn't a structure/class...) and continuous (which also isn't a structure/class). perhaps it should just be coercible instead
 
 namespace clm
-section
+variables [normed_field k] [normed_space k E] [normed_space k F] [normed_space k G]
+include k
 
 -- TODO: how to get multiplication notation?
 -- we can treat a clm as a function
@@ -194,7 +203,7 @@ local notation L `⬝`:70 v := clm_app_pair ⟨L, v⟩
 
 -- proof data
 -- isc is short for is_clm
-def isc (L : clm E F) : is_continuous_linear_map L := L.2
+def isc (L : clm E F) : is_continuous_linear_map' L := L.2
 
 -- functional extensionality
 def ext {L M : clm E F} (e : ∀ v, L⬝v = M⬝v) : L = M := 
@@ -209,28 +218,28 @@ def subst (L : clm E F) (M : E → F) (e : ∀ v, L⬝v = M v) : clm E F :=
 
 -- composition
 -- TODO: this should probably be an instance
-def clm_comp : clm E F → clm F G → clm E G := λ L M, ⟨λ v, M (L v), is_continuous_linear_map.comp L.2 M.2⟩
+def clm_comp : clm E F → clm F G → clm E G := λ L M, ⟨λ v, M (L v), is_continuous_linear_map'.comp L.2 M.2⟩
 local notation M `∘` L := clm_comp L M
 
 -- each of the identities and operations comes with an instance that tells Lean what it is and a simplification lemma that gives Lean a hint about how to "evaluate" it
 
 -- zero map
-def zero : clm E F := ⟨λ v, 0, is_continuous_linear_map.zero⟩
+def zero : clm E F := ⟨λ v, 0, is_continuous_linear_map'.zero⟩
 instance : has_zero (clm E F) := ⟨clm.zero⟩
 @[simp] theorem zero_eval (v) : (0 : clm E F)⬝v = 0 := rfl
 
 -- identity map
 -- TODO: not sure if this is necessary or even desirable
-def one : clm E E := ⟨λ v, v, is_continuous_linear_map.id⟩
+def one : clm E E := ⟨λ v, v, is_continuous_linear_map'.id⟩
 instance : has_one (clm E E) := ⟨clm.one⟩
 @[simp] theorem one_eval (v) : (1 : clm E E)⬝v = v := rfl
 
-def add : clm E F → clm E F → clm E F := λ L M, ⟨L + M, is_continuous_linear_map.add L.isc M.isc⟩
+def add : clm E F → clm E F → clm E F := λ L M, ⟨L + M, is_continuous_linear_map'.add L.isc M.isc⟩
 instance : has_add (clm E F) := ⟨clm.add⟩
 @[simp] theorem add_eval : Π (L M : clm E F) v, (L + M)⬝v = L⬝v + M⬝v
 | ⟨L, pL⟩ ⟨M, pM⟩ v := rfl
 
-def neg : clm E F → clm E F := λ L, ⟨λ v, -(L⬝v), is_continuous_linear_map.neg L.isc⟩
+def neg : clm E F → clm E F := λ L, ⟨λ v, -(L⬝v), is_continuous_linear_map'.neg L.isc⟩
 instance : has_neg (clm E F) := ⟨clm.neg⟩
 
 def sub : clm E F → clm E F → clm E F := λ L M, L + (-M)
@@ -244,7 +253,7 @@ instance : has_sub (clm E F) := ⟨clm.sub⟩
 @[simp] theorem neg_eval (L : clm E F) (v) : (-L)⬝v = -(L⬝v) := sorry
 -- show (0 - L) v = _, by simp
 
-def smul : k → clm E F → clm E F := λ c L, ⟨λ v, c•(L⬝v), is_continuous_linear_map.smul c L.isc⟩
+def smul : k → clm E F → clm E F := λ c L, ⟨λ v, c•(L⬝v), is_continuous_linear_map'.smul c L.isc⟩
 instance : has_scalar k (clm E F) := ⟨clm.smul⟩
 -- TODO: prove it
 @[simp] theorem smul_eval : Π c (L : clm E F) v, (c•L)⬝v = c•(L⬝v) := sorry
@@ -301,14 +310,13 @@ apply real.lb_le_Inf,
 -- bounded
 {
   simp,
-  have : is_bounded L,
+  have : is_bounded_linear_map L,
   begin
+  -- TODO: I think what's going wrong here is I should have a companion proof that clms and blms are isomorphic
     -- exact bounded_continuous_linear_map L.isc,
     admit
   end,
-  unfold is_bounded at this,
-  cases this,
-  cases this_h,
+  rcases this with ⟨linear, M, M_pos, M_bound⟩,
   existsi _,
   split,
   apply le_of_lt,
@@ -406,5 +414,4 @@ instance : normed_space k (clm E F) :=
   norm_smul := op_norm_pos_homo
 }
 
-end
 end clm
