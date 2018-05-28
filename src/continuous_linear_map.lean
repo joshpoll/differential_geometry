@@ -1,3 +1,11 @@
+/- 
+  Continuous Linear Maps
+
+  These are a well-behaved subset of all linear maps. In finite dimensional normed vector spaces, all linear maps are continuous. For a certain type of normed space (which?), continuous linear maps and bounded linear maps are the same.
+
+  The derivative of f : E → F is f' : E → continuous_linear_map E F.
+ -/
+
 import differentiability.normed_space
 
 universes u v w x
