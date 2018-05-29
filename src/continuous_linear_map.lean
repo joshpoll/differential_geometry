@@ -4,7 +4,7 @@
   These are a well-behaved subset of all linear maps. In finite dimensional normed vector spaces, all linear maps are continuous. For a certain type of normed space (which?), continuous linear maps and bounded linear maps are the same.
 
   The derivative of f : E → F is f' : E → continuous_linear_map E F.
- -/
+-/
 
 import differentiability.normed_space
 
@@ -25,6 +25,7 @@ variable (hL : is_continuous_linear_map L)
 include hL
 
 -- linear map simp lemmas
+-- TODO: should there be an smul lemma
 @[simp] lemma zero : L 0 = 0 := hL.to_is_linear_map.zero
 @[simp] lemma neg (v : E) : L (- v) = - L v := hL.to_is_linear_map.neg _
 @[simp] lemma sub (v w : E) : L (v - w) = L v - L w := hL.to_is_linear_map.sub _ _
@@ -132,10 +133,16 @@ by refine {smul := (•), ..continuous_linear_map.add_comm_group, ..};
 
 end module
 
-section normed_vector_space
+section metric_space
 
 -- TODO!
 
-end normed_vector_space
+end metric_space
+
+section normed_space
+
+-- TODO!
+
+end normed_space
 
 end continuous_linear_map
