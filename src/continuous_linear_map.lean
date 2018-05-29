@@ -33,7 +33,7 @@ include hL
 end
 
 -- TODO: is_linear_map and continuous have different order conventions for this theorem. adopting is_linear_map's
-lemma comp {M : G → E} (hL : is_continuous_linear_map L) (hM : is_continuous_linear_map M) : is_continuous_linear_map L → is_continuous_linear_map M → is_continuous_linear_map (L ∘ M)
+lemma comp {M : G → E} : is_continuous_linear_map L → is_continuous_linear_map M → is_continuous_linear_map (L ∘ M)
 | ⟨L_lin, L_cont⟩ ⟨M_lin, M_cont⟩ := ⟨is_linear_map.comp L_lin M_lin, continuous.comp M_cont L_cont⟩
 
 lemma id : is_continuous_linear_map (id : E → E) := ⟨is_linear_map.id, continuous_id⟩
@@ -73,9 +73,9 @@ def continuous_linear_map {k : Type u} (E : Type v) (F : Type w) [normed_field k
 subtype (@is_continuous_linear_map k E F _ _ _)
 
 namespace continuous_linear_map
-variables {k : Type u} {E : Type v} {F : Type w}
-variables [normed_field k] [normed_space k E] [normed_space k F]
-variables {c : k} {v w : E} {L : continuous_linear_map E F}
+variables {k : Type u} {E : Type v} {F : Type w} {G : Type x}
+variables [normed_field k] [normed_space k E] [normed_space k F] [normed_space k G]
+variables {c : k} {v w : E} {L M : continuous_linear_map E F}
 include k
 
 instance : has_coe_to_fun (continuous_linear_map E F) := ⟨_, subtype.val⟩
@@ -83,14 +83,59 @@ instance : has_coe_to_fun (continuous_linear_map E F) := ⟨_, subtype.val⟩
 @[extensionality]
 theorem ext {M : continuous_linear_map E F} (h : ∀ v, L v = M v) : L = M := subtype.eq $ funext h
 
-lemma is_continuous_linear_map_coe : is_continuous_linear_map L := L.property
+lemma is_clm (L : continuous_linear_map E F) : is_continuous_linear_map L := L.property
 
-@[simp] lemma map_add  : L (v + w) = L v + L w := is_continuous_linear_map_coe.add v w
-@[simp] lemma map_smul : L (c • v) = c • L v := is_continuous_linear_map_coe.smul c v
-@[simp] lemma map_zero : L 0 = 0 := is_continuous_linear_map_coe.zero
-@[simp] lemma map_neg  : L (-v) = -L v := is_continuous_linear_map_coe.neg _
-@[simp] lemma map_sub  : L (v - w) = L v - L w := is_continuous_linear_map_coe.sub _ _
+def subst (L : continuous_linear_map E F) (M : E → F) (e : ∀ v, L v = M v) : continuous_linear_map E F :=
+⟨M, by rw ← (funext e : coe_fn L = M); exact L.is_clm⟩
 
+def comp (L :continuous_linear_map F G) (M : continuous_linear_map E F) : continuous_linear_map E G := ⟨λv, L (M v), is_continuous_linear_map.comp L.is_clm M.is_clm⟩
 
+@[simp] lemma map_add  : L (v + w) = L v + L w := L.is_clm.add v w
+@[simp] lemma map_zero : L 0 = 0 := L.is_clm.zero
+@[simp] lemma map_smul : L (c • v) = c • L v := L.is_clm.smul c v
+@[simp] lemma map_neg  : L (-v) = -L v := L.is_clm.neg _
+@[simp] lemma map_sub  : L (v - w) = L v - L w := L.is_clm.sub _ _
+
+section add_comm_group
+
+def add : continuous_linear_map E F → continuous_linear_map E F → continuous_linear_map E F := λ L M, ⟨L + M, is_continuous_linear_map.map_add L.is_clm M.is_clm⟩
+
+def zero : continuous_linear_map E F := ⟨λv, 0, is_continuous_linear_map.map_zero⟩
+
+def neg : continuous_linear_map E F → continuous_linear_map E F := λ L, ⟨λv, -(L v), is_continuous_linear_map.map_neg L.is_clm⟩
+
+instance : has_add (continuous_linear_map E F) := ⟨add⟩
+instance : has_zero (continuous_linear_map E F) := ⟨zero⟩
+instance : has_neg (continuous_linear_map E F) := ⟨neg⟩
+
+@[simp] lemma add_app : (L + M) v = L v + M v := rfl
+@[simp] lemma zero_app : (0 : continuous_linear_map E F) v = 0 := rfl
+@[simp] lemma neg_app : (-L) v = -L v := rfl
+
+instance : add_comm_group (continuous_linear_map E F) :=
+by refine {add := (+), zero := 0, neg := has_neg.neg, ..}; { intros, apply ext, simp }
+
+end add_comm_group
+
+section module
+
+-- TODO: need to prove topological vector space stuff
+def smul : k → continuous_linear_map E F → continuous_linear_map E F := λ c L, ⟨λ v, c•(L v), is_continuous_linear_map.smul_right c L.is_clm⟩
+
+instance : has_scalar k (continuous_linear_map E F) := ⟨smul⟩
+
+@[simp] lemma smul_app : (c • L) v = c • (L v) := rfl
+
+instance : module k (continuous_linear_map E F) :=
+by refine {smul := (•), ..continuous_linear_map.add_comm_group, ..};
+  { intros, apply ext, simp [smul_add, add_smul, mul_smul] }
+
+end module
+
+section normed_vector_space
+
+-- TODO!
+
+end normed_vector_space
 
 end continuous_linear_map
