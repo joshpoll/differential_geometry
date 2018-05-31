@@ -54,3 +54,7 @@ class topological_manifold (α : Type u) (n : ℕ) extends
   second_countable_topology α,
   t2_space α : Type u :=
 (locally_euclidean_of_dim_n (a : α) : nbhd_chart a n)
+
+-- could write: forall a, exists f : (nbhd a).sets -> R^n, is_homeo f
+-- this seems not as good b/c we frequently use the charts and the functions so want to return those!!!
+-- this is not the case for things like linear_map, continuous_linear_map, where all additional data are propositions. what about the derivative? seems like propositional data, but is it all that?

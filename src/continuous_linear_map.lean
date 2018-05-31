@@ -58,12 +58,13 @@ lemma map_sub {M : E → F} : is_continuous_linear_map L → is_continuous_linea
 | ⟨L_lin, L_cont⟩ ⟨M_lin, M_cont⟩ := ⟨is_linear_map.map_sub L_lin M_lin, continuous_sub L_cont M_cont⟩
 
 -- TODO: this requires topological vector spaces
-/- lemma map_smul_right {α : Type u} {β : Type v} {γ : Type w} [comm_ring α] [module α β] [module α γ]
-  {f : β → γ} {r : α} (hf : is_linear_map f) :
-  is_linear_map (λb, r • f b) -/
+lemma map_smul_right {c : k} : is_continuous_linear_map L →
+  is_continuous_linear_map (λv, c • L v)
+| ⟨lin, cont⟩ := ⟨is_linear_map.map_smul_right lin, sorry⟩
 
--- TODO: this requires topological vector spaces
-/- lemma map_smul_left {f : γ → α} (hf : is_linear_map f) : is_linear_map (λb, f b • x) -/
+-- TODO: this requires topological vector spaces and normed_field.to_normed_space (see ring.to_module in module.lean)
+lemma map_smul_left {L : E → k} {v : F} : is_continuous_linear_map L → is_continuous_linear_map (λc, L c • v)
+| ⟨lin, cont⟩ := sorry
 
 end is_continuous_linear_map
 
